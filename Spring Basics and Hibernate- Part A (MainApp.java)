@@ -1,0 +1,31 @@
+package com.example.springdi;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class MainApp {
+
+    @Bean
+    public Course course() {
+        return new Course();
+    }
+
+    @Bean
+    public Student student(Course course) {
+        return new Student(course);
+    }
+
+    public static void main(String[] args) {
+        ApplicationContext context = 
+            new AnnotationConfigApplicationContext(MainApp.class);
+
+        Student student = context.getBean(Student.class);
+
+        student.displayStudentInfo();
+
+        ((AnnotationConfigApplicationContext) context).close();
+    }
+}
