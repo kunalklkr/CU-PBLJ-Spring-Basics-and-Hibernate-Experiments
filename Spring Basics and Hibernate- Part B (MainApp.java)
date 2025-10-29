@@ -1,0 +1,168 @@
+package com.example.hibernate;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+
+import java.util.List;
+import java.util.Properties;
+
+public class MainApp {
+    
+    private static SessionFactory sessionFactory;
+
+    static {
+        try {
+            Properties properties = new Properties();
+            properties.put("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
+            properties.put("hibernate.connection.url", "jdbc:mysql://localhost:3306/student_db?useSSL=false");
+            
+            // --- UPDATE THESE ---
+            properties.put("hibernate.connection.username", "root");
+            properties.put("hibernate.connection.password", "your_password");
+            // --------------------
+
+            properties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
+            properties.put("hibernate.show_sql", "true");
+            properties.put("hibernate.hbm2ddl.auto", "update");
+            properties.put("hibernate.current_session_context_class", "thread");
+
+            Configuration configuration = new Configuration();
+            configuration.setProperties(properties);
+            
+            // Add the *separate* entity class
+            configuration.addAnnotatedClass(Student.class);
+
+            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+                    .applySettings(configuration.getProperties()).build();
+            
+            sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+        } catch (Throwable ex) {
+            System.err.println("Initial SessionFactory creation failed." + ex);
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+    
+    public static SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+    
+    public static void shutdown() {
+        getSessionFactory().close();
+    }
+
+    public static void main(String[] args) {
+        
+        Integer studentId = createStudent("John", "Doe", "john.doe@example.com");
+        System.out.println("--- Created Student with ID: " + studentId + " ---");
+
+        readStudent(studentId);
+        
+        updateStudent(studentId, "john.doe.updated@example.com");
+        System.out.println("--- Updated Student ID: " + studentId + " ---");
+        
+        readStudent(studentId);
+
+        readAllStudents();
+
+        deleteStudent(studentId);
+        System.out.println("--- Deleted Student ID: " + studentId + " ---");
+
+        readAllStudents();
+        
+        shutdown();
+    }
+
+    public static Integer createStudent(String firstName, String lastName, String email) {
+        Session session = sessionFactory.openSession();
+        Transaction tx = null;
+        Integer studentId = null;
+        try {
+            tx = session.beginTransaction();
+            Student student = new Student(firstName, lastName, email);
+            studentId = (Integer) session.save(student);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+        return studentId;
+    }
+
+    public static void readStudent(int studentId) {
+        Session session = sessionFactory.openSession();
+        try {
+            Student student = session.get(Student.class, studentId);
+            if (student != null) {
+                System.out.println("Reading Student: " + student);
+            } else {
+                System.out.println("Student with ID " + studentId + " not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+
+    public static void readAllStudents() {
+        Session session = sessionFactory.openSession();
+        try {
+            List<Student> students = session.createQuery("FROM Student", Student.class).list();
+            System.out.println("--- Reading All Students ---");
+            if (students.isEmpty()) {
+                System.out.println("No students found in the database.");
+            } else {
+                for (Student s : students) {
+                    System.out.println(s);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+
+    public static void updateStudent(int studentId, String newEmail) {
+        Session session = sessionFactory.openSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            Student student = session.get(Student.class, studentId);
+            if (student != null) {
+                student.setEmail(newEmail);
+                session.update(student);
+                tx.commit();
+            }
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+
+    public static void deleteStudent(int studentId) {
+        Session session = sessionFactory.openSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            Student student = session.get(Student.class, studentId);
+            if (student != null) {
+                session.delete(student);
+                tx.commit();
+            }
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+}
