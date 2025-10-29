@@ -1,0 +1,15 @@
+package com.example.springdi;
+
+public class Student {
+
+    private final Course course;
+
+    public Student(Course course) {
+        this.course = course;
+    }
+
+    public void displayStudentInfo() {
+        System.out.println("I am a student.");
+        System.out.println("Today, I am studying: " + course.getSubject());
+    }
+}
