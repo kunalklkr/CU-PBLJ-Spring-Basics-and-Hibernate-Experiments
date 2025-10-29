@@ -1,0 +1,69 @@
+package com.example.bank;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "account")
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(name = "account_holder")
+    private String accountHolder;
+
+    @Column(name = "balance")
+    private double balance;
+
+    public Account() {}
+
+    public Account(String accountHolder, double balance) {
+        this.accountHolder = accountHolder;
+        this.balance = balance;
+    }
+    
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getAccountHolder() { return accountHolder; }
+    public void setAccountHolder(String accountHolder) { this.accountHolder = accountHolder; }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+
+    @Override
+    public String toString() {
+        return "Account [id=" + id + ", accountHolder=" + accountHolder + ", balance=" + balance + "]";
+    }
+}
+
+
+@Entity
+@Table(name = "transaction_log")
+class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(name = "from_account_id")
+    private int fromAccountId;
+
+    @Column(name = "to_account_id")
+    private int toAccountId;
+
+    @Column(name = "amount")
+    private double amount;
+
+    @Column(name = "timestamp")
+    private LocalDateTime timestamp;
+    
+    public Transaction() {}
+
+    public Transaction(int fromAccountId, int toAccountId, double amount) {
+        this.fromAccountId = fromAccountId;
+        this.toAccountId = toAccountId;
+        this.amount = amount;
+        this.timestamp = LocalDateTime.now();
+    }
+}
